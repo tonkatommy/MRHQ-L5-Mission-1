@@ -11,7 +11,7 @@ const predictionEndpoint = process.env["VISION_PREDICTION_ENDPOINT"];
 
 // Configuration
 const projectId = process.env["VISION_PROJECT_ID"]; // You'll need to add this to your .env file
-const publishIterationName = "mission1tommy";
+const publishIterationName = "mission1tonkatommy";
 
 // Instantiate prediction client only
 const predictor_credentials = new msRest.ApiKeyCredentials({
@@ -53,7 +53,7 @@ async function classifyImage(imagePath) {
 // Main execution
 (async () => {
   try {
-    const imagePath = `D:/.MISSIONREADYHQ/2025 Aug - L5ADV/Missions/MRHQ-L5-Mission-1/backend/training/images/pexels-d-ng-nhan-324384-18207330.jpg`;
+    const imagePath = `D:/.MISSIONREADYHQ/2025 Aug - L5ADV/Missions/MRHQ-L5-Mission-1/training/images/pexels-d-ng-nhan-324384-18207330.jpg`;
 
     // Check if image file exists
     if (!fs.existsSync(imagePath)) {

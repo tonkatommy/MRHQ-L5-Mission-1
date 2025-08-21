@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Classification</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        max-width: 600px;
+        width: 100%;
+        text-align: center;
+      }
+
+      h1 {
+        color: #333;
+        margin-bottom: 30px;
+        font-size: 2.2rem;
+        font-weight: 300;
+      }
+
+      .upload-area {
+        border: 3px dashed #ccc;
+        border-radius: 10px;
+        padding: 60px 20px;
+        margin: 30px 0;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        background: #f9f9f9;
+      }
+
+      .upload-area:hover {
+        border-color: #667eea;
+        background: #f0f4ff;
+      }
+
+      .upload-area.dragover {
+        border-color: #667eea;
+        background: #e3f2fd;
+        transform: scale(1.02);
+      }
+
+      .upload-icon {
+        font-size: 3rem;
+        color: #ccc;
+        margin-bottom: 20px;
+      }
+
+      .upload-text {
+        color: #666;
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+      }
+
+      #fileInput {
+        display: none;
+      }
+
+      .btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        margin: 10px;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .preview-container {
+        margin: 30px 0;
+        display: none;
+      }
+
+      .preview-image {
+        max-width: 100%;
+        max-height: 300px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .results-container {
+        margin-top: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        display: none;
+      }
+
+      .results-title {
+        font-size: 1.3rem;
+        color: #333;
+        margin-bottom: 15px;
+      }
+
+      .prediction-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #eee;
+      }
+
+      .prediction-item:last-child {
+        border-bottom: none;
+      }
+
+      .tag-name {
+        font-weight: 600;
+        color: #333;
+      }
+
+      .confidence {
+        font-weight: bold;
+        padding: 5px 12px;
+        border-radius: 15px;
+        color: white;
+      }
+
+      .confidence.high {
+        background: #28a745;
+      }
+
+      .confidence.medium {
+        background: #ffc107;
+      }
+
+      .confidence.low {
+        background: #dc3545;
+      }
+
+      .loading {
+        display: none;
+        margin: 20px 0;
+      }
+
+      .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 15px;
+        border-radius: 10px;
+        margin: 20px 0;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🔍 Image Classification</h1>
+      <p style="color: #666; margin-bottom: 30px">Upload an image to see AI predictions</p>
+
+      <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-icon">📁</div>
+        <div class="upload-text">Click here or drag and drop an image</div>
+        <div style="color: #999; font-size: 0.9rem">Supports: JPG, PNG, GIF</div>
+      </div>
+
+      <input type="file" id="fileInput" accept="image/*" />
+
+      <div class="preview-container">
+        <img id="previewImage" class="preview-image" alt="Preview" />
+      </div>
+
+      <button class="btn" id="predictBtn" onclick="predictImage()" disabled>
+        🤖 Analyze Image
+      </button>
+
+      <div class="loading">
+        <div class="spinner"></div>
+        <p style="margin-top: 10px; color: #666">Analyzing image...</p>
+      </div>
+
+      <div class="error" id="errorMessage"></div>
+
+      <div class="results-container">
+        <div class="results-title">🎯 Prediction Results</div>
+        <div id="resultsContent"></div>
+      </div>
+    </div>
+
+    <script>
+      let selectedFile = null;
+
+      // File input handler
+      document.getElementById("fileInput").addEventListener("change", handleFileSelect);
+
+      // Drag and drop handlers
+      const uploadArea = document.querySelector(".upload-area");
+
+      ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+        uploadArea.addEventListener(eventName, preventDefaults, false);
+      });
+
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      ["dragenter", "dragover"].forEach((eventName) => {
+        uploadArea.addEventListener(eventName, () => uploadArea.classList.add("dragover"), false);
+      });
+
+      ["dragleave", "drop"].forEach((eventName) => {
+        uploadArea.addEventListener(
+          eventName,
+          () => uploadArea.classList.remove("dragover"),
+          false
+        );
+      });
+
+      uploadArea.addEventListener("drop", handleDrop, false);
+
+      function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length > 0) {
+          handleFile(files[0]);
+        }
+      }
+
+      function handleFileSelect(e) {
+        const file = e.target.files[0];
+        if (file) {
+          handleFile(file);
+        }
+      }
+
+      function handleFile(file) {
+        if (!file.type.startsWith("image/")) {
+          showError("Please select a valid image file.");
+          return;
+        }
+
+        selectedFile = file;
+
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const previewImage = document.getElementById("previewImage");
+          previewImage.src = e.target.result;
+          document.querySelector(".preview-container").style.display = "block";
+        };
+        reader.readAsDataURL(file);
+
+        // Enable predict button
+        document.getElementById("predictBtn").disabled = false;
+
+        // Hide previous results
+        document.querySelector(".results-container").style.display = "none";
+        hideError();
+      }
+
+      async function predictImage() {
+        if (!selectedFile) {
+          showError("Please select an image first.");
+          return;
+        }
+
+        // Show loading
+        document.querySelector(".loading").style.display = "block";
+        document.getElementById("predictBtn").disabled = true;
+        hideError();
+
+        try {
+          // Create FormData
+          const formData = new FormData();
+          formData.append("image", selectedFile);
+
+          // Make API call to your backend
+          const response = await fetch("/api/predict", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+          displayResults(result.predictions);
+        } catch (error) {
+          console.error("Prediction error:", error);
+          showError("Failed to analyze image. Please try again.");
+        } finally {
+          // Hide loading
+          document.querySelector(".loading").style.display = "none";
+          document.getElementById("predictBtn").disabled = false;
+        }
+      }
+
+      function displayResults(predictions) {
+        const resultsContent = document.getElementById("resultsContent");
+        resultsContent.innerHTML = "";
+
+        if (!predictions || predictions.length === 0) {
+          resultsContent.innerHTML = '<p style="color: #666;">No predictions available.</p>';
+        } else {
+          predictions.forEach((prediction) => {
+            const confidence = Math.round(prediction.probability * 100);
+            const confidenceClass = confidence >= 70 ? "high" : confidence >= 40 ? "medium" : "low";
+
+            const predictionElement = document.createElement("div");
+            predictionElement.className = "prediction-item";
+            predictionElement.innerHTML = `
+                        <span class="tag-name">${prediction.tagName}</span>
+                        <span class="confidence ${confidenceClass}">${confidence}%</span>
+                    `;
+            resultsContent.appendChild(predictionElement);
+          });
+        }
+
+        document.querySelector(".results-container").style.display = "block";
+      }
+
+      function showError(message) {
+        const errorDiv = document.getElementById("errorMessage");
+        errorDiv.textContent = message;
+        errorDiv.style.display = "block";
+      }
+
+      function hideError() {
+        document.getElementById("errorMessage").style.display = "none";
+      }
+
+      // Demo mode - if no backend is available, show sample results
+      // Remove this in production
+      // window.demoMode = true;
+
+      if (window.demoMode) {
+        // Override predictImage for demo
+        window.originalPredictImage = predictImage;
+
+        predictImage = async function () {
+          if (!selectedFile) {
+            showError("Please select an image first.");
+            return;
+          }
+
+          document.querySelector(".loading").style.display = "block";
+          document.getElementById("predictBtn").disabled = true;
+          hideError();
+
+          // Simulate API delay
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+
+          // Sample predictions
+          const samplePredictions = [
+            { tagName: "Dog", probability: 0.85 },
+            { tagName: "Cat", probability: 0.12 },
+            { tagName: "Bird", probability: 0.03 },
+          ];
+
+          displayResults(samplePredictions);
+
+          document.querySelector(".loading").style.display = "none";
+          document.getElementById("predictBtn").disabled = false;
+        };
+      }
+    </script>
+  </body>
+</html>
