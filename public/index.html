@@ -261,8 +261,8 @@
       uploadArea.addEventListener("drop", handleDrop, false);
 
       function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
+        const dataTx = e.dataTransfer;
+        const files = dataTx.files;
         if (files.length > 0) {
           handleFile(files[0]);
         }
@@ -370,41 +370,6 @@
 
       function hideError() {
         document.getElementById("errorMessage").style.display = "none";
-      }
-
-      // Demo mode - if no backend is available, show sample results
-      // Remove this in production
-      // window.demoMode = true;
-
-      if (window.demoMode) {
-        // Override predictImage for demo
-        window.originalPredictImage = predictImage;
-
-        predictImage = async function () {
-          if (!selectedFile) {
-            showError("Please select an image first.");
-            return;
-          }
-
-          document.querySelector(".loading").style.display = "block";
-          document.getElementById("predictBtn").disabled = true;
-          hideError();
-
-          // Simulate API delay
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-
-          // Sample predictions
-          const samplePredictions = [
-            { tagName: "Dog", probability: 0.85 },
-            { tagName: "Cat", probability: 0.12 },
-            { tagName: "Bird", probability: 0.03 },
-          ];
-
-          displayResults(samplePredictions);
-
-          document.querySelector(".loading").style.display = "none";
-          document.getElementById("predictBtn").disabled = false;
-        };
       }
     </script>
   </body>
