@@ -1,8 +1,6 @@
 # AI Training Images datasets
 training/
 
-.idea
-
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
